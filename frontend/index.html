@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#08090b" />
+    <meta name="description" content="NULLSCAPE — exploração multiplayer em espaços liminares. Perdido é o único caminho." />
+    <title>NULLSCAPE</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div id="app">
+      <!-- ================= MENU PRINCIPAL ================= -->
+      <section id="screen-menu" class="screen active">
+        <div class="menu-backdrop" aria-hidden="true">
+          <div class="bg-corridor"></div>
+          <div class="bg-fog"></div>
+          <div class="bg-grain"></div>
+          <div class="bg-vignette"></div>
+        </div>
+
+        <div class="menu-content">
+          <header class="brand">
+            <h1 class="brand-title" data-glitch="NULLSCAPE">NULLSCAPE</h1>
+            <p class="brand-sub">Espaços que não deveriam existir</p>
+            <p class="brand-quote" id="menu-quote"></p>
+          </header>
+
+          <div class="menu-grid">
+            <div class="panel panel-main">
+              <label class="field">
+                <span class="field-label">Seu nome</span>
+                <input id="input-name" type="text" maxlength="18" placeholder="anônimo" autocomplete="off" spellcheck="false" />
+              </label>
+
+              <div class="btn-row">
+                <button id="btn-quickplay" class="btn btn-primary" type="button">
+                  <span class="btn-title">Entrar em sala pública</span>
+                  <span class="btn-sub">sem cadastro · até 6 jogadores</span>
+                </button>
+                <button id="btn-create" class="btn" type="button">
+                  <span class="btn-title">Criar sala</span>
+                  <span class="btn-sub">pública ou privada</span>
+                </button>
+                <button id="btn-join" class="btn" type="button">
+                  <span class="btn-title">Entrar por código</span>
+                  <span class="btn-sub">convite de 6 caracteres</span>
+                </button>
+              </div>
+
+              <div class="menu-footer">
+                <button id="btn-settings-menu" class="btn-ghost" type="button">Configurações</button>
+                <button id="btn-codex" class="btn-ghost" type="button">Arquivo de anomalias</button>
+                <button id="btn-help" class="btn-ghost" type="button">Como jogar</button>
+              </div>
+            </div>
+
+            <aside class="panel panel-rooms">
+              <div class="panel-head">
+                <h2>Salas ativas</h2>
+                <button id="btn-refresh-rooms" class="btn-mini" type="button" title="Atualizar">↻</button>
+              </div>
+              <div id="rooms-list" class="rooms-list">
+                <p class="muted small">Conectando ao servidor…</p>
+              </div>
+              <div class="server-status" id="server-status">
+                <span class="dot" id="status-dot"></span>
+                <span id="status-text">verificando servidor</span>
+              </div>
+            </aside>
+          </div>
+
+          <footer class="menu-legal">
+            <span>v1.0 · Phaser 3 · Socket.IO</span>
+            <span class="sep">/</span>
+            <span>conteúdo original · sem assets de terceiros</span>
+            <span class="sep">/</span>
+            <button id="btn-credits" class="btn-ghost inline" type="button">créditos</button>
+          </footer>
+        </div>
+      </section>
+
+      <!-- ================= CRIAR SALA ================= -->
+      <section id="screen-create" class="screen">
+        <div class="menu-backdrop" aria-hidden="true">
+          <div class="bg-corridor alt"></div>
+          <div class="bg-fog"></div>
+          <div class="bg-grain"></div>
+        </div>
+        <div class="modal">
+          <h2 class="modal-title">Criar uma sala</h2>
+          <p class="modal-sub">O mundo é gerado a partir de uma semente. A mesma semente, o mesmo mundo.</p>
+          <label class="field">
+            <span class="field-label">Nome da sala</span>
+            <input id="input-room-name" type="text" maxlength="28" placeholder="Sala de espera" spellcheck="false" />
+          </label>
+          <label class="field">
+            <span class="field-label">Semente (opcional)</span>
+            <input id="input-seed" type="text" maxlength="24" placeholder="ex.: HOTEL217 — deixe vazio para sortear" spellcheck="false" />
+          </label>
+          <div class="toggle-row">
+            <label class="switch">
+              <input id="check-private" type="checkbox" />
+              <span class="switch-track"><span class="switch-dot"></span></span>
+              <span class="switch-label">Sala privada (só com código de convite)</span>
+            </label>
+          </div>
+          <div class="modal-actions">
+            <button id="btn-create-cancel" class="btn btn-ghost" type="button">Voltar</button>
+            <button id="btn-create-confirm" class="btn btn-primary" type="button">Gerar mundo</button>
+          </div>
+          <p class="modal-error" id="create-error"></p>
+        </div>
+      </section>
+
+      <!-- ================= ENTRAR POR CÓDIGO ================= -->
+      <section id="screen-join" class="screen">
+        <div class="menu-backdrop" aria-hidden="true">
+          <div class="bg-corridor alt"></div>
+          <div class="bg-fog"></div>
+          <div class="bg-grain"></div>
+        </div>
+        <div class="modal modal-small">
+          <h2 class="modal-title">Entrar por código</h2>
+          <p class="modal-sub">O código tem 6 caracteres e é entregue por quem criou a sala.</p>
+          <label class="field">
+            <span class="field-label">Código de convite</span>
+            <input id="input-code" type="text" maxlength="6" placeholder="······" autocomplete="off" spellcheck="false" class="code-input" />
+          </label>
+          <div class="modal-actions">
+            <button id="btn-join-cancel" class="btn btn-ghost" type="button">Voltar</button>
+            <button id="btn-join-confirm" class="btn btn-primary" type="button">Entrar</button>
+          </div>
+          <p class="modal-error" id="join-error"></p>
+        </div>
+      </section>
+
+      <!-- ================= LOBBY ================= -->
+      <section id="screen-lobby" class="screen">
+        <div class="menu-backdrop" aria-hidden="true">
+          <div class="bg-corridor"></div>
+          <div class="bg-fog"></div>
+          <div class="bg-grain"></div>
+          <div class="bg-vignette"></div>
+        </div>
+        <div class="lobby-content">
+          <header class="lobby-head">
+            <div>
+              <h2 id="lobby-room-name">Sala</h2>
+              <p class="muted small" id="lobby-seed">semente · —</p>
+            </div>
+            <div class="lobby-code">
+              <span class="field-label">Código de convite</span>
+              <button id="lobby-code-value" class="code-display" type="button" title="Copiar código">······</button>
+            </div>
+          </header>
+
+          <div class="lobby-grid">
+            <div class="panel lobby-players">
+              <div class="panel-head">
+                <h2>Jogadores</h2>
+                <span class="muted small" id="lobby-count">0 / 6</span>
+              </div>
+              <ul id="lobby-player-list" class="player-list"></ul>
+              <p class="muted small lobby-hint">Todos entram no mesmo ambiente. A ausência de alguém é parte do jogo.</p>
+            </div>
+
+            <div class="panel lobby-brief">
+              <div class="panel-head"><h2>O que se sabe</h2></div>
+              <div class="brief-body">
+                <div class="brief-regions" id="lobby-regions"></div>
+                <div class="brief-mechanic" id="lobby-mechanic"></div>
+                <div class="brief-loadout" id="lobby-loadout"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="lobby-actions">
+            <button id="btn-lobby-leave" class="btn btn-ghost" type="button">Sair da sala</button>
+            <button id="btn-lobby-start" class="btn btn-primary btn-start" type="button" disabled>
+              <span class="btn-title">Entrar no mundo</span>
+              <span class="btn-sub">esperando outros jogadores (opcional)</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= JOGO ================= -->
+      <section id="screen-game" class="screen">
+        <div id="game-root" class="game-root"></div>
+
+        <div id="hud" class="hud" hidden>
+          <div class="hud-top">
+            <div class="hud-team" id="hud-team"></div>
+            <div class="hud-center">
+              <div class="hud-region"><span class="hud-region-name" id="hud-region-name">—</span></div>
+              <div class="hud-objective" id="hud-objective">Encontre o primeiro mecanismo.</div>
+            </div>
+            <div class="hud-right">
+              <div class="hud-conn" id="hud-conn" title="Qualidade da conexão">
+                <span class="conn-bars"><i></i><i></i><i></i><i></i></span>
+                <span class="conn-label" id="conn-label">—</span>
+              </div>
+              <button id="btn-pause" class="btn-icon" type="button" title="Pausar (Esc)">☰</button>
+            </div>
+          </div>
+
+          <div class="hud-bottom">
+            <div class="hud-vitals">
+              <div class="vital-bar" title="Integridade"><span id="vital-hp" style="width:100%"></span></div>
+              <span class="vital-label" id="vital-label">íntegro</span>
+            </div>
+            <div class="hud-items" id="hud-items"></div>
+            <div class="hud-sigils" id="hud-sigils"></div>
+          </div>
+
+          <div id="hud-prompt" class="hud-prompt" hidden>
+            <kbd>E</kbd><span id="hud-prompt-text">Interagir</span>
+          </div>
+
+          <div id="hud-message" class="hud-message" hidden></div>
+          <div id="hud-toast" class="hud-toast" hidden></div>
+          <div id="hud-whisper" class="hud-whisper" hidden></div>
+          <div id="hud-flicker" class="hud-flicker" aria-hidden="true"></div>
+          <div id="hud-vignette" class="hud-vignette" aria-hidden="true"></div>
+        </div>
+
+        <div id="death-overlay" class="overlay-death" hidden>
+          <p class="death-title">Você se perdeu.</p>
+          <p class="death-sub" id="death-sub">O mundo te devolve em alguns segundos.</p>
+          <button id="btn-respawn" class="btn" type="button">Reaparecer agora</button>
+        </div>
+
+        <div id="ending-overlay" class="overlay-ending" hidden>
+          <div class="ending-inner">
+            <h2 id="ending-title">O ciclo se fecha.</h2>
+            <p id="ending-text"></p>
+            <dl class="ending-stats" id="ending-stats"></dl>
+            <div class="modal-actions">
+              <button id="btn-ending-continue" class="btn" type="button">Continuar explorando</button>
+              <button id="btn-ending-leave" class="btn btn-primary" type="button">Deixar esta sala</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="pause-overlay" class="overlay-pause" hidden>
+          <div class="pause-inner">
+            <h2>Pausa</h2>
+            <p class="muted small">O mundo continua sem você. Só a sua tela espera.</p>
+            <div class="pause-actions">
+              <button id="btn-resume" class="btn btn-primary" type="button">Voltar</button>
+              <button id="btn-pause-settings" class="btn" type="button">Configurações</button>
+              <button id="btn-pause-leave" class="btn btn-ghost" type="button">Deixar a sala</button>
+            </div>
+            <div class="pause-info" id="pause-info"></div>
+          </div>
+        </div>
+
+        <div id="note-overlay" class="overlay-note" hidden>
+          <article class="note-paper">
+            <h3 id="note-title">Nota</h3>
+            <p id="note-text"></p>
+            <div class="note-actions">
+              <button id="btn-note-close" class="btn btn-ghost" type="button">Guardar (Esc)</button>
+            </div>
+            <p class="note-foot">anotação arquivada</p>
+          </article>
+        </div>
+      </section>
+
+      <!-- ================= CONFIGURAÇÕES ================= -->
+      <section id="screen-settings" class="screen">
+        <div class="menu-backdrop" aria-hidden="true">
+          <div class="bg-corridor"></div>
+          <div class="bg-fog"></div>
+        </div>
+        <div class="modal modal-settings">
+          <h2 class="modal-title">Configurações</h2>
+          <div class="settings-group">
+            <h3>Apresentação</h3>
+            <label class="slider-row">
+              <span>Granulação do vídeo</span>
+              <input id="set-grain" type="range" min="0" max="100" value="35" />
+              <output id="set-grain-out">35%</output>
+            </label>
+            <label class="slider-row">
+              <span>Escuridão</span>
+              <input id="set-dark" type="range" min="0" max="100" value="62" />
+              <output id="set-dark-out">62%</output>
+            </label>
+            <label class="slider-row">
+              <span>Neblina</span>
+              <input id="set-fog" type="range" min="0" max="100" value="40" />
+              <output id="set-fog-out">40%</output>
+            </label>
+            <label class="switch">
+              <input id="set-reduced" type="checkbox" />
+              <span class="switch-track"><span class="switch-dot"></span></span>
+              <span class="switch-label">Reduzir efeitos visuais (acessibilidade e desempenho)</span>
+            </label>
+            <label class="switch">
+              <input id="set-shake" type="checkbox" checked />
+              <span class="switch-track"><span class="switch-dot"></span></span>
+              <span class="switch-label">Tremor de câmera</span>
+            </label>
+          </div>
+          <div class="settings-group">
+            <h3>Áudio</h3>
+            <label class="slider-row">
+              <span>Volume geral</span>
+              <input id="set-volume" type="range" min="0" max="100" value="70" />
+              <output id="set-volume-out">70%</output>
+            </label>
+            <label class="slider-row">
+              <span>Ambiente</span>
+              <input id="set-ambience" type="range" min="0" max="100" value="55" />
+              <output id="set-ambience-out">55%</output>
+            </label>
+            <label class="switch">
+              <input id="set-mute" type="checkbox" />
+              <span class="switch-track"><span class="switch-dot"></span></span>
+              <span class="switch-label">Silenciar tudo</span>
+            </label>
+          </div>
+          <div class="settings-group">
+            <h3>Controles</h3>
+            <p class="controls-list muted small">
+              <span><kbd>W A S D</kbd> andar</span>
+              <span><kbd>Shift</kbd> correr (faz barulho)</span>
+              <span><kbd>E</kbd> interagir</span>
+              <span><kbd>Tab</kbd> inventário</span>
+              <span><kbd>Esc</kbd> pausa</span>
+            </p>
+          </div>
+          <div class="modal-actions">
+            <button id="btn-settings-back" class="btn btn-primary" type="button">Voltar</button>
+            <button id="btn-settings-reset" class="btn btn-ghost" type="button">Restaurar padrões</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= ARQUIVO (CÓDEX) ================= -->
+      <section id="screen-codex" class="screen">
+        <div class="menu-backdrop" aria-hidden="true">
+          <div class="bg-corridor"></div>
+          <div class="bg-fog" style="opacity: 0.6"></div>
+        </div>
+        <div class="codex-content">
+          <header class="codex-head">
+            <h2>Arquivo de anomalias</h2>
+            <p class="muted small">O que se sabe sobre o que não deveria existir. Cada entrada foi reunida por quem voltou.</p>
+          </header>
+          <div class="codex-grid">
+            <div class="panel">
+              <h3 class="panel-title">Criaturas</h3>
+              <div id="codex-creatures" class="codex-list"></div>
+            </div>
+            <div class="panel">
+              <h3 class="panel-title">Anomalias</h3>
+              <div id="codex-anomalies" class="codex-list"></div>
+            </div>
+            <div class="panel">
+              <h3 class="panel-title">Descobertas</h3>
+              <div id="codex-discoveries" class="codex-list">
+                <p class="muted small">Encontre anotações, resolva mecanismos e sobreviva para preencher este arquivo.</p>
+              </div>
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button id="btn-codex-back" class="btn btn-primary" type="button">Voltar</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= AJUDA ================= -->
+      <section id="screen-help" class="screen">
+        <div class="menu-backdrop" aria-hidden="true">
+          <div class="bg-corridor alt"></div>
+          <div class="bg-fog"></div>
+        </div>
+        <div class="modal modal-help">
+          <h2 class="modal-title">Como jogar</h2>
+          <ol class="help-list">
+            <li><strong>Vocês estão presos no mesmo lugar.</strong> Sigam juntos ou se separem — as duas coisas têm consequências.</li>
+            <li><strong>Quatro regiões, quatro mecanismos.</strong> Cada região esconde um quebra-cabeça cooperativo que revela um sigilo.</li>
+            <li><strong>Portões exigem sigilos.</strong> O primeiro portão pede 1 sigilo. O segundo, 2. Levem-nos até o Altar na última região.</li>
+            <li><strong>Correr chama atenção.</strong> As criaturas escutam. Andar devagar é uma forma de sobreviver.</li>
+            <li><strong>Olhar importa.</strong> Algumas coisas só existem enquanto são observadas. Outras, só quando não são.</li>
+            <li><strong>Anotações explicam regras.</strong> Elas não dão a resposta, mas descrevem o comportamento do mundo.</li>
+            <li><strong>Reconexão.</strong> Se sua conexão cair, volte para a mesma sala: seu corpo continuará lá.</li>
+          </ol>
+          <p class="muted small">Não há combate. A única ferramenta é saber quando ir, quando parar e quando olhar para o outro lado.</p>
+          <div class="modal-actions">
+            <button id="btn-help-back" class="btn btn-primary" type="button">Voltar</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= CRÉDITOS ================= -->
+      <section id="screen-credits" class="screen">
+        <div class="menu-backdrop" aria-hidden="true">
+          <div class="bg-corridor"></div>
+          <div class="bg-fog"></div>
+        </div>
+        <div class="modal modal-help">
+          <h2 class="modal-title">Créditos</h2>
+          <p class="credits-text">
+            NULLSCAPE é um projeto original. Arquitetura, geração procedural, criaturas, anomalias e áudio são criações deste
+            repositório — nenhum asset de franquia existente é usado.
+          </p>
+          <dl class="credits-list">
+            <dt>Motor</dt><dd>Phaser 3 + Vite</dd>
+            <dt>Rede</dt><dd>Socket.IO sobre Node.js/Express</dd>
+            <dt>Arte</dt><dd>Desenhada proceduralmente em canvas, tile a tile</dd>
+            <dt>Áudio</dt><dd>Sintetizado em tempo real com WebAudio</dd>
+            <dt>Publicação</dt><dd>GitHub Pages (cliente) + Render (servidor)</dd>
+          </dl>
+          <div class="modal-actions">
+            <button id="btn-credits-back" class="btn btn-primary" type="button">Voltar</button>
+          </div>
+        </div>
+      </section>
+
+      <div id="conn-banner" class="conn-banner" hidden>
+        <span id="conn-banner-text">Conexão perdida. Tentando reconectar…</span>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

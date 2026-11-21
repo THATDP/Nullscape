@@ -1,0 +1,68 @@
+name: Testes e build
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  backend:
+    name: Servidor (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['20', '22']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+      - name: Instalar dependências
+        working-directory: backend
+        run: npm ci
+      - name: Verificação de sintaxe
+        working-directory: backend
+        run: |
+          node --check src/index.js
+          node --check src/rooms.js
+          node --check src/net.js
+      - name: Testes unitários
+        working-directory: backend
+        run: npm run test:unit
+      - name: Testes de integração (6 clientes reais)
+        working-directory: backend
+        run: npm run test:integration
+
+  frontend:
+    name: Cliente (build + smoke)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      - name: Instalar dependências
+        working-directory: frontend
+        run: npm ci
+      - name: Instalar dependências do servidor (para o smoke)
+        working-directory: backend
+        run: npm ci
+      - name: Smoke test do cliente (jsdom + servidor real)
+        working-directory: frontend
+        run: npm run smoke
+      - name: Build de produção
+        working-directory: frontend
+        env:
+          VITE_SERVER_URL: https://nullscape-example.onrender.com
+        run: npm run build
+      - name: Conferir tamanho do bundle
+        working-directory: frontend
+        run: |
+          du -sh dist
+          find dist -name '*.js' -size +2M -print -exec echo ' ^ bundle acima de 2MB' \;
