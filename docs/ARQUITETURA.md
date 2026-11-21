@@ -92,6 +92,22 @@ Navegador (Phaser) ──Socket.IO──> Node/Express ──> Room -> RoomSyste
         └──── snapshots (20 Hz) ◄───────┘
 ```
 
+### 3.2.0 HTTP (fora do WebSocket)
+
+| Rota | Uso | Resposta principal |
+| --- | --- | --- |
+| `GET /health` | health check do Render, monitoramento, *warm-up* | `{ok, status:'alive', uptimeSeconds, rooms, players, version, now}` — sempre `200` se o processo está de pé |
+| `GET /ready` | readiness (libera tráfego) | `{ok}`; `503` se o `RoomManager` não inicializou |
+| `GET /api/status` | números do servidor | `{ok, version, tickRate:20, maxPlayersPerRoom:6, rooms, players, uptimeSeconds}` |
+| `GET /api/rooms` | diretório público de salas (máx. 60, salas privadas omitidas) | `{rooms:[{id,name,code,players,max,hostName,region,seed,started,private}], now}` |
+| `GET /api/rooms/:code` | detalhe de uma sala (o mesmo objeto da lista) | `{room}` ou `404 {error}` |
+| `GET /api/preview/:seed` | diagnostica a geração de um mundo **sem criar sala** | `{seed, hash, themes:[0..3], rooms, puzzles, validation, sizeBytes}` |
+| `GET /api/codex` | conteúdo do código in-game | `{creatures:[{id,label,note,telegraph,behavior}], anomalies:[{id,label,rarity,message,rule}]}` |
+
+> `/health` responde **200 mesmo com o jogo vazio** — é o endpoint que o Render
+> usa no `healthCheckPath`. Se você recebe 502 no Render, o problema é o
+> processo não subir (porta/build), não a lógica do jogo.
+
 ### 3.2 Protocolo resumido
 
 **Cliente → servidor**

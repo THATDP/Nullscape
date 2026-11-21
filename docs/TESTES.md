@@ -1,6 +1,6 @@
 # NULLSCAPE — Testes
 
-Última execução completa: **87 testes automatizados** + **25 verificações do cliente**, 0 falhas.
+Última execução completa: **89 testes automatizados** + **25 verificações do cliente**, 0 falhas.
 **Multiplayer com navegadores reais: ainda não executado neste ambiente** —
 veja a seção 3 e o checklist final.
 
@@ -12,12 +12,12 @@ veja a seção 3 e o checklist final.
 
 | Arquivo | Cobertura | Nº |
 | --- | --- | --- |
-| `worldgen.test.js` | determinismo por seed, conectividade BFS, portas reais, portões, sigilos alcançáveis, RLE, payload, paletas, **regras de iluminação por tema**, água, spawn, tempo de geração | 15 |
+| `worldgen.test.js` | determinismo por seed, conectividade BFS, portas reais, portões, sigilos alcançáveis, RLE, payload, paletas, **regras de iluminação por tema**, **câmaras secretas (>90% das regiões)**, água, spawn, tempo de geração | 16 |
 | `physics.test.js` | determinismo de física, colisão, velocidade máxima, anti-speedhack, deslize em paredes, convergência predição↔servidor, **mundo hidratado da rede**, **colisão de portões** | 13 |
 | `creatures.test.js` | estados e contra-jogo de cada criatura, telegrafia, dano com cooldown, limite de criaturas, limpeza, tensão de anomalias, raridade | 17 |
 | `puzzles.test.js` | resolução das 6 variantes, alcance, jogador morto, ordem dos disjuntores, janela das válvulas, alavanca solta, sino, cartão | 9 |
 | `rooms.test.js` | criação/limpeza, 6 jogadores, sanitização, input inválido, morte/respawn, sigilo perdido, altar, portas, reconexão, expiração, estado sem dados sensíveis, **desempenho** | 21 |
-| `integration.test.js` | **6 clientes Socket.IO reais**: entrar, ver-se, movimento, rejeição de teleporte, estado compartilhado, puzzle, portão, reconexão, saída/limite, rate limit, limpeza, sala privada | 12 |
+| `integration.test.js` | **6 clientes Socket.IO reais**: entrar, ver-se, movimento, rejeição de teleporte, estado compartilhado, puzzle, portão, reconexão, saída/limite, rate limit, limpeza, sala privada, **HTTP documentado (`/health`, `/ready`, `/api/*`)** | 13 |
 
 ```bash
 npm test              # tudo

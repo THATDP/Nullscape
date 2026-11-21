@@ -86,6 +86,33 @@ test('health e status expõem informações corretas', async () => {
   assert.equal(status.maxPlayersPerRoom, 6);
 });
 
+test('endpoints de observabilidade respondem com o formato documentado', async () => {
+  const health = await fetch(`${URL}/health`).then((r) => r.json());
+  for (const key of ['ok', 'status', 'uptimeSeconds', 'rooms', 'players', 'version', 'now']) {
+    assert.ok(key in health, `/health deve expor '${key}'`);
+  }
+  const ready = await fetch(`${URL}/ready`);
+  assert.equal(ready.status, 200);
+  assert.equal((await ready.json()).ok, true);
+
+  const codex = await fetch(`${URL}/api/codex`).then((r) => r.json());
+  assert.equal(codex.creatures.length, 7, 'códice deve listar as 7 criaturas');
+  assert.equal(codex.anomalies.length, 11, 'códice deve listar as 11 anomalias');
+  for (const c of codex.creatures) {
+    assert.ok(c.id && c.label && c.note && c.telegraph && c.behavior);
+  }
+
+  const rooms = await fetch(`${URL}/api/rooms`).then((r) => r.json());
+  assert.ok(Array.isArray(rooms.rooms) && typeof rooms.now === 'number');
+  const preview = await fetch(`${URL}/api/preview/ALPHA9`).then((r) => r.json());
+  // a seed é normalizada com um sufixo determinístico (ex.: ALPHA9:7919)
+  assert.ok(preview.seed.startsWith('ALPHA9'), `seed inesperada: ${preview.seed}`);
+  assert.equal(preview.themes.length, 4);
+  assert.ok(preview.sizeBytes > 10_000 && preview.sizeBytes < 80_000, `payload inesperado: ${preview.sizeBytes}`);
+  const missing = await fetch(`${URL}/api/rooms/NAOEXISTE`);
+  assert.equal(missing.status, 404);
+});
+
 test('gerador é determinístico entre servidor e mundo de referência', () => {
   const a = generateValidWorld('INTEGRATION');
   const b = generateValidWorld('INTEGRATION');

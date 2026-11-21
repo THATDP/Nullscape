@@ -76,8 +76,9 @@ Todos os gráficos são desenhados em canvas na inicialização
   madeira, chapas metálicas com rebites;
 - **parede**: gradiente vertical + faixa superior iluminada + rodapé em sombra +
   textura por tema + manchas;
-- **mobiliário**: 60+ tipos ("desk", "locker", "divingboard", "blackboard",
-  "conveyor"…), cada um com sombra e detalhes coerentes com o ambiente;
+- **mobiliário**: **56 tipos** (7 a 8 por tema — "desk", "locker", "divingboard",
+  "blackboard", "conveyor"…), cada um com sombra e detalhes coerentes com o
+  ambiente;
 - **criaturas**: desenho vetorial no canvas (silhuetas, olhos, pulsos,
   ondulações);
 - **efeitos**: *glow* radial, poeira, sombras elípticas.
