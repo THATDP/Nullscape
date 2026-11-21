@@ -304,20 +304,39 @@ function propsForRoom(rng, room, theme, offset, grid) {
 }
 
 function lightsForRoom(rng, room, theme, regionIndex) {
+  // Cada ambiente tem SUA regra de iluminação (densidade, raio, instabilidade
+  // e intensidade base) — ver `lighting` em shared/world/themes.js.
+  const rule = theme.lighting || { density: 0.68, radius: [3, 6], unstable: 0.16, steady: 0.7 };
   const lights = [];
   for (let y = room.y + 2; y < room.y + room.h - 2; y += 4) {
     for (let x = room.x + 2; x < room.x + room.w - 2; x += 4) {
-      if (!rng.chance(0.68)) continue;
+      if (!rng.chance(rule.density)) continue;
+      const flickering = rng.chance(rule.unstable);
       lights.push({
         x: (x + 0.5) * TILE_SIZE,
         y: (y + 0.5) * TILE_SIZE,
-        radius: rng.int(3, 6) * TILE_SIZE,
-        intensity: +rng.range(0.3, 0.85).toFixed(2),
-        flicker: rng.chance(theme.id === 'industrial' || theme.id === 'garage' ? 0.5 : 0.16),
+        radius: rng.int(rule.radius[0], rule.radius[1]) * TILE_SIZE,
+        // luz instável é mais fraca; luz estável fica perto da intensidade base
+        intensity: +rng.range(rule.steady * (flickering ? 0.45 : 0.8), rule.steady).toFixed(2),
+        flicker: flickering,
         color: theme.palette.glow,
         regionId: regionIndex,
+        themeId: theme.id,
       });
     }
+  }
+  // Garante que nenhuma sala fique totalmente às escuras.
+  if (!lights.length) {
+    lights.push({
+      x: (room.x + room.w / 2) * TILE_SIZE,
+      y: (room.y + room.h / 2) * TILE_SIZE,
+      radius: rng.int(rule.radius[0], rule.radius[1]) * TILE_SIZE,
+      intensity: +rule.steady.toFixed(2),
+      flicker: false,
+      color: theme.palette.glow,
+      regionId: regionIndex,
+      themeId: theme.id,
+    });
   }
   return lights;
 }
@@ -391,30 +410,48 @@ function freeFloorNear(region, room, gxTarget, gyTarget, exclude = null) {
 }
 
 function trySecretChamber(rng, rooms, theme) {
-  const w = rng.int(6, 8);
-  const h = rng.int(5, 6);
-  const host = rng.pick(rooms.filter((r) => r.role === ROOM_ROLES.NORMAL || r.role === ROOM_ROLES.HUB)) || rooms[0];
-  if (!host) return null;
-  const candidates = [];
-  const hc = centerOf(host);
-  for (let y = 2; y < REGION_H - h - 2; y += 2) {
-    for (let x = 2; x < REGION_W - w - 2; x += 2) {
-      const box = { x, y, w, h };
-      if (rooms.some((r) => rectsOverlap(r, box, 3))) continue;
-      const d = Math.hypot(centerOf(box).x - hc.x, centerOf(box).y - hc.y);
-      if (d > 18) continue;
-      candidates.push({ box, d });
+  // Uma câmara secreta por região é parte da promessa do jogo (cada solução de
+  // quebra-cabeça revela um sigilo lá dentro), então não basta uma tentativa
+  // única: variamos tamanho e sala-anfitriã até achar espaço, e só então
+  // escolhemos o encaixe mais próximo. Antes disso ~19% das regiões ficavam sem.
+  const hosts = rooms.filter((r) => r.role === ROOM_ROLES.NORMAL || r.role === ROOM_ROLES.HUB);
+  if (!hosts.length) return null;
+  const ORDERED = rng.shuffle(hosts);
+
+  // Tentativas progressivamente mais permissivas: câmaras menores, margem
+  // menor e corredor mais longo — mas nunca uma sala minúscula injogável.
+  const PLAN = [
+    { size: [6, 8, 5, 6], margin: 3, maxDist: 18 },
+    { size: [5, 7, 4, 5], margin: 2, maxDist: 20 },
+    { size: [4, 6, 4, 4], margin: 2, maxDist: 24 },
+  ];
+  for (let attempt = 0; attempt < 9; attempt++) {
+    const plan = PLAN[Math.min(PLAN.length - 1, Math.floor(attempt / 3))];
+    const w = rng.int(plan.size[0], plan.size[1]);
+    const h = rng.int(plan.size[2], plan.size[3]);
+    const host = ORDERED[attempt % ORDERED.length];
+    const hc = centerOf(host);
+    const candidates = [];
+    for (let y = 2; y < REGION_H - h - 2; y++) {
+      for (let x = 2; x < REGION_W - w - 2; x++) {
+        const box = { x, y, w, h };
+        if (rooms.some((r) => rectsOverlap(r, box, plan.margin))) continue;
+        const d = Math.hypot(centerOf(box).x - hc.x, centerOf(box).y - hc.y);
+        if (d > plan.maxDist) continue;
+        candidates.push({ box, d });
+      }
     }
+    if (!candidates.length) continue;
+    candidates.sort((a, b) => a.d - b.d);
+    const chosen = { ...candidates[0].box };
+    chosen.kind = 'secret';
+    chosen.role = ROOM_ROLES.SECRET;
+    chosen.secret = true;
+    chosen.name = rng.pick(['Câmara Selada', 'Quarto de Serviço', 'Sala Sem Planta', 'Anexo 0', 'O Armário Grande', 'Antiga Copa', 'Sala dos Sussurros']);
+    chosen.hiddenThemeId = rng.pick(THEME_IDS.filter((t) => t !== theme.id));
+    return { room: chosen, host };
   }
-  if (!candidates.length) return null;
-  candidates.sort((a, b) => a.d - b.d);
-  const chosen = { ...candidates[0].box };
-  chosen.kind = 'secret';
-  chosen.role = ROOM_ROLES.SECRET;
-  chosen.secret = true;
-  chosen.name = rng.pick(['Câmara Selada', 'Quarto de Serviço', 'Sala Sem Planta', 'Anexo 0', 'O Armário Grande', 'Antiga Copa', 'Sala dos Sussurros']);
-  chosen.hiddenThemeId = rng.pick(THEME_IDS.filter((t) => t !== theme.id));
-  return { room: chosen, host };
+  return null;
 }
 
 // ---------------------------------------------------------------------------
@@ -507,14 +544,14 @@ function generateRegion(rng, regionIndex, themeId, options) {
       done++;
     }
   }
-  // Câmara secreta
+  // Câmara secreta: corredor estreito ligando à sala-anfitriã. Se falhar,
+  // tenta SEM bloquear corredores de outras salas (o corredor secreto pode
+  // cruzar um existente). Só desiste se as duas tentativas falharem.
   if (secret) {
-    const res = connectRooms(grid, secretData.host, secret, rng, blocked.filter((r) => r !== interiorOf(rooms[0]) || true), doorCells);
-    if (!res) {
-      // fallback: remove a câmara secreta
-    } else {
-      rooms.push(secret);
-    }
+    const allowed = blocked.filter((r) => r !== interiorOf(rooms[0]) || true);
+    let res = connectRooms(grid, secretData.host, secret, rng, allowed, doorCells);
+    if (!res) res = connectRooms(grid, secretData.host, secret, rng, [], doorCells);
+    if (res) rooms.push(secret);
   }
 
   // Mobiliário e luzes

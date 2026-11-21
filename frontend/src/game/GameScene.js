@@ -807,6 +807,9 @@ export class GameScene extends Phaser.Scene {
     if (item.kind === 'prop') return 'Revistar';
     if (item.kind === 'keycardItem') return 'Pegar cartão magnético';
     if (item.kind === 'keycardReader') return 'Usar leitor';
+    // mecanismos nomeados vêm do gerador (Válvula Alfa, Disjuntor 2, Sino…)
+    if (['valve', 'breaker', 'lever', 'plate', 'bell', 'choirSeal'].includes(item.kind)) return item.label || 'Acionar mecanismo';
+    if (item.kind === 'altar') return 'Depositar sigilos';
     return item.label || 'Interagir';
   }
 

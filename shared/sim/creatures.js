@@ -303,7 +303,11 @@ export class CreatureSystem {
     if (mag < 0.01) return false;
     const dot = (dx / dist) * (lx / mag) + (dy / dist) * (ly / mag);
     const facing = dot > 0.35;
-    const near = dist < 3 * TILE_SIZE;
+    // Percepção periférica só em distância de toque. Para O Lento ela é mínima
+    // de propósito: o contra-jogo dele é DESVIAR O OLHAR, e um raio grande
+    // tornava impossível congelá-lo depois que ele se aproximava.
+    const nearRadius = creature.kind === 'slow' ? TILE_SIZE * 1.05 : 3 * TILE_SIZE;
+    const near = dist < nearRadius;
     return facing || near;
   }
 

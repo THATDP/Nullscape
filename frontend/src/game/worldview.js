@@ -205,7 +205,10 @@ export class WorldView {
       ...(this.data.notes || []).map((n) => ({ ...n, visible: true })),
     ];
     for (const item of items) {
-      if (!item.visible && item.kind !== 'keycardItem') continue;
+      // Sigilos nascem invisíveis, mas o sprite PRECISA existir: revelar é só
+      // alternar visibilidade (setSigilVisible). Antes eram descartados aqui e
+      // o jogador nunca via o sigilo — item central da progressão.
+      if (!item.visible && item.kind !== 'keycardItem' && item.kind !== 'sigil') continue;
       let sprite = null;
       if (item.kind === 'sigil') {
         sprite = scene.add.image((item.gx + 0.5) * TS, (item.gy + 0.5) * TS, 'prop-sigil');
@@ -214,8 +217,15 @@ export class WorldView {
         sprite = scene.add.image((item.gx + 0.5) * TS, (item.gy + 0.5) * TS, 'prop-note').setScale(0.8);
       } else if (item.kind === 'keycardReader') {
         sprite = scene.add.image((item.gx + 0.5) * TS, (item.gy + 0.5) * TS, 'prop-breaker').setScale(0.85);
-      } else if (['valve', 'breaker', 'lever', 'plate', 'bell', 'choirSeal', 'altar'].includes(item.kind)) {
-        sprite = scene.add.image((item.gx + 0.5) * TS, (item.gy + 0.5) * TS, `prop-${item.kind}`);
+      } else if (!['sigil', 'note', 'keycardReader'].includes(item.kind)) {
+        // Nem todo mecanismo tem desenho próprio (keycardItem, por exemplo):
+        // cai no marcador genérico em vez de criar um sprite sem textura.
+        const propKey = `prop-${item.kind}`;
+        sprite = scene.add.image(
+          (item.gx + 0.5) * TS,
+          (item.gy + 0.5) * TS,
+          scene.textures.exists(propKey) ? propKey : 'prop-breaker',
+        );
         if (item.kind === 'altar') {
           const glow = scene.add.image((item.gx + 0.5) * TS, (item.gy + 0.5) * TS, 'glow').setScale(1.6).setAlpha(0.16).setTint(0xd8cf9a);
           this.interactLayer.add(glow);
@@ -223,6 +233,7 @@ export class WorldView {
       }
       if (sprite) {
         sprite.setDepth(8);
+        if (item.kind === 'sigil' || item.kind === 'keycardItem') sprite.setVisible(!!item.visible);
         this.interactLayer.add(sprite);
         this.interactSprites.set(item.id, sprite);
       }

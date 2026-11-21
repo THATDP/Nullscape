@@ -142,9 +142,33 @@ test('movimento é sincronizado e o servidor rejeita teleporte', async () => {
   const startX = hostPlayer.x;
   const startY = hostPlayer.y;
 
-  // anda para a direita por ~1s
+  // Escolhe uma direção realmente livre: o spawn pode encostar numa parede
+  // (e aí "andar para a direita" não move ninguém — teste dependia de sorte).
+  const { tryMove } = await import('../../shared/sim/physics.js');
+  const DIRS = [
+    [1, 0],
+    [-1, 0],
+    [0, 1],
+    [0, -1],
+  ];
+  // tryMove devolve {x, y} (sem flag) — medimos o deslocamento real.
+  const freeDir =
+    DIRS.find(([dx, dy]) => {
+      const probe = { x: startX, y: startY };
+      let travelled = 0;
+      for (let step = 0; step < 24; step++) {
+        const res = tryMove(room.world, probe.x, probe.y, dx * 4, dy * 4);
+        travelled += Math.hypot(res.x - probe.x, res.y - probe.y);
+        probe.x = res.x;
+        probe.y = res.y;
+      }
+      return travelled > 60; // ~2 tiles livre
+    }) || DIRS[0];
+  const [dirX, dirY] = freeDir;
+
+  // anda livre por ~1s
   for (let i = 0; i < 20; i++) {
-    hostSocket.emit('input', { seq: 10 + i, dx: 1, dy: 0, run: false });
+    hostSocket.emit('input', { seq: 10 + i, dx: dirX, dy: dirY, run: false });
     await sleep(50);
   }
   hostSocket.emit('input', { seq: 99, dx: 0, dy: 0, run: false });
@@ -154,11 +178,12 @@ test('movimento é sincronizado e o servidor rejeita teleporte', async () => {
 
   // Velocidade máxima não pode ser violada por inputs absurdos
   const beforeX = hostPlayer.x;
+  const beforeY = hostPlayer.y;
   for (let i = 0; i < 30; i++) {
     hostSocket.emit('input', { seq: 200 + i, dx: 1e9, dy: 1e9, run: true });
     await sleep(50);
   }
-  const dist = Math.hypot(hostPlayer.x - beforeX, hostPlayer.y - startY);
+  const dist = Math.hypot(hostPlayer.x - beforeX, hostPlayer.y - beforeY);
   const maxExpected = 5.6 * 32 * (30 * 0.05) + 40; // margem de aceleração
   assert.ok(dist <= maxExpected, `velocidade acima do permitido: ${dist}px > ${maxExpected}px`);
 
@@ -189,35 +214,74 @@ test('estado compartilhado inclui mundo, criaturas e progresso', async () => {
 
 test('quebra-cabeça cooperativo é validado pelo servidor e revela sigilo', async () => {
   const room = manager.all().find((r) => r.players.size === 6);
-  const puzzle = room.world.puzzles.find((p) => p.kind === 'pressurePlates') || room.world.puzzles[0];
+  const puzzle = room.world.puzzles[0];
   const players = Array.from(room.players.values());
   const [p1, p2] = players;
+  assert.ok(p2, 'precisa de dois jogadores');
 
-  // Teleporta (no servidor) para perto do mecanismo — simula jogadores chegando lá
-  const mechIds = puzzle.mechanismIds;
-  const m1 = room.world.interactables.find((m) => m.id === mechIds[0]);
-  const m2 = room.world.interactables.find((m) => m.id === mechIds[1]);
-  if (!m1 || !m2) return; // variante sem dois mecanismos
-  p1.x = (m1.gx + 0.5) * TILE_SIZE;
-  p1.y = (m1.gy + 0.5) * TILE_SIZE;
-  p2.x = (m2.gx + 0.5) * TILE_SIZE;
-  p2.y = (m2.gy + 0.5) * TILE_SIZE;
+  const mechs = puzzle.mechanismIds.map((id) => room.world.interactables.find((m) => m.id === id)).filter(Boolean);
+  const place = (player, mech) => {
+    player.x = (mech.gx + 0.5) * TILE_SIZE;
+    player.y = (mech.gy + 0.5) * TILE_SIZE;
+  };
 
-  if (puzzle.kind === 'pressurePlates') {
-    room.puzzleSystem.interact(p1.id, m1.id);
-    room.puzzleSystem.interact(p2.id, m2.id);
-  }
-  if (puzzle.kind === 'holdLever') {
-    const lever = room.world.interactables.find((m) => m.puzzleId === puzzle.id && m.kind === 'lever');
-    const plate = room.world.interactables.find((m) => m.puzzleId === puzzle.id && m.kind === 'plate');
-    if (lever && plate) {
-      p1.x = (lever.gx + 0.5) * TILE_SIZE;
-      p1.y = (lever.gy + 0.5) * TILE_SIZE;
-      p2.x = (plate.gx + 0.5) * TILE_SIZE;
-      p2.y = (plate.gy + 0.5) * TILE_SIZE;
+  // Cada variante tem sua regra; aqui resolvemos todas pelo servidor.
+  switch (puzzle.kind) {
+    case 'valvePair': {
+      const [a, b] = mechs.filter((m) => m.kind === 'valve');
+      place(p1, a);
+      place(p2, b);
+      room.puzzleSystem.interact(p1.id, a.id);
+      room.puzzleSystem.interact(p2.id, b.id);
+      break;
+    }
+    case 'breakerOrder': {
+      const breakers = mechs.filter((m) => m.kind === 'breaker');
+      for (const index of puzzle.order) {
+        const b = breakers.find((m) => m.orderIndex === index);
+        place(p1, b);
+        room.puzzleSystem.interact(p1.id, b.id);
+      }
+      break;
+    }
+    case 'holdLever': {
+      const lever = mechs.find((m) => m.kind === 'lever');
+      const plate = mechs.find((m) => m.kind === 'plate');
+      place(p1, lever);
+      place(p2, plate);
       room.puzzleSystem.interact(p1.id, lever.id);
       room.puzzleSystem.interact(p2.id, plate.id);
+      break;
     }
+    case 'pressurePlates': {
+      const plates = mechs.filter((m) => m.kind === 'plate');
+      place(p1, plates[0]);
+      place(p2, plates[1]);
+      room.puzzleSystem.interact(p1.id, plates[0].id);
+      room.puzzleSystem.interact(p2.id, plates[1].id);
+      break;
+    }
+    case 'keycard': {
+      const card = room.world.interactables.find((m) => m.kind === 'keycardItem' && m.puzzleId === puzzle.id);
+      const reader = room.world.interactables.find((m) => m.kind === 'keycardReader' && m.puzzleId === puzzle.id);
+      place(p1, card);
+      room.puzzleSystem.interact(p1.id, card.id);
+      place(p1, reader);
+      room.puzzleSystem.interact(p1.id, reader.id);
+      break;
+    }
+    case 'silenceChoir': {
+      const bell = mechs.find((m) => m.kind === 'bell');
+      place(p1, bell);
+      let now = Date.now();
+      for (let i = 0; i < 3; i++) {
+        now += 1500;
+        room.puzzleSystem.interact(p1.id, bell.id, now);
+      }
+      break;
+    }
+    default:
+      assert.fail(`variante desconhecida: ${puzzle.kind}`);
   }
 
   const st = room.puzzleSystem.state.get(puzzle.id);

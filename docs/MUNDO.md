@@ -70,6 +70,8 @@ sonora, nomes de sala e **anotações** (que ensinam as regras do mundo).
 - **Som**: quase silêncio; só um tom grave espaçado.
 - **Detalhe**: salas sem nome, "Antessala", "O Intervalo". Pode ser a última
   região (35% de chance) — a mais opressiva fica no fim.
+- **Luz**: a mais escura de todas — 20% de densidade, raio 2–4 tiles, 35% das
+  luminárias instáveis e intensidade base 0,35 (contra 1,00 da Escola).
 
 > Câmaras secretas usam **o tema de outro ambiente** — uma piscina dentro do
 > escritório, um quarto de hotel dentro do estacionamento. É intencionalmente
@@ -139,7 +141,11 @@ Não há níveis. A progressão é **descoberta registrada localmente**:
 - **Descobertas**: o "Arquivo de anomalias" (códex) desbloqueia entradas conforme
   você as presencia; criaturas já estão descritas, anomalias só aparecem depois
   de vistas.
-- **Segredos**: uma câmara secreta por região (tema trocado).
+- **Segredos**: uma câmara secreta por região (tema trocado) — **~99% das
+  regiões** conseguem encaixá-la e **todo mundo tem ao menos uma**. O encaixe é
+  tentado até 9 vezes, com tamanho e margem
+  progressivamente menores, e o corredor secreto tenta uma segunda rota antes de
+  desistir.
 - **Eventos raros**: anomalias `impossível`, a Válvula Orgânica, o Vigia.
 - **Estatísticas**: distância percorrida, anotações lidas, anomalias vistas,
   mortes, duração — mostradas no encerramento.

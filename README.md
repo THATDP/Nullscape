@@ -20,12 +20,13 @@ falar e quando olhar para o outro lado**.
 | --- | --- |
 | Servidor autoritativo (Express + Socket.IO) | ✅ |
 | Mundo procedural determinístico (4 regiões, 40×40 tiles cada) | ✅ |
+| Regras de iluminação próprias por ambiente (densidade/raio/instabilidade) | ✅ |
 | 8 ambientes com identidade visual/sonora | ✅ |
 | 6 quebra-cabeças cooperativos | ✅ |
 | 7 criaturas com IA por estados | ✅ |
 | 11 anomalias com raridade e regra interna | ✅ |
 | Reconexão com token de sessão | ✅ |
-| Loops de teste: **86 testes** (unit + integração com 6 clientes Socket.IO reais) + **25 verificações** de fumaça no cliente | ✅ |
+| Loops de teste: **87 testes** (unit + integração com 6 clientes Socket.IO reais) + **25 verificações** de fumaça no cliente | ✅ |
 | Build de produção (Vite) | ✅ |
 | Deploy: GitHub Pages + Render | ✅ (instruções em `docs/PUBLICACAO.md`) |
 | Teste manual em navegadores reais | ⚠️ **necessário** — ver `docs/TESTES.md` |
@@ -50,7 +51,7 @@ falar e quando olhar para o outro lado**.
 │   │   ├── net.js       # protocolo, validação, rate limit
 │   │   ├── rooms.js     # salas, sessões, limpeza
 │   │   └── logger.js    # config por ambiente + logs
-│   └── test/            # 86 testes (node:test)
+│   └── test/            # 87 testes (node:test)
 ├── shared/              # CÓDIGO COMPARTILHADO servidor ↔ cliente
 │   ├── world/           # gerador procedural, temas, RNG
 │   └── sim/             # física, criaturas, anomalias, puzzles
@@ -202,7 +203,7 @@ Detalhes completos em [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md).
 
 ```bash
 cd backend
-npm test              # 86 testes (unit + integração com 6 clientes reais)
+npm test              # 87 testes (unit + integração com 6 clientes reais)
 npm run test:unit     # gerador, física, criaturas, puzzles, salas
 npm run test:integration
 ```

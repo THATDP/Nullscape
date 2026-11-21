@@ -162,6 +162,56 @@ test('payload serializado é leve o suficiente para rede', () => {
   }
 });
 
+test('praticamente toda região tem câmara secreta (com tema trocado)', () => {
+  // Antes existia UMA tentativa por região e ~19% das regiões ficavam sem
+  // câmara; em 45% dos mundos não havia nenhuma. Isso quebrava a promessa de
+  // "cada quebra-cabeça revela um sigilo na câmara secreta".
+  let regions = 0;
+  let withSecret = 0;
+  for (let i = 0; i < 12; i++) {
+    const world = generateValidWorld(`CAMARA-${i}`);
+    for (const region of world.regions) {
+      regions++;
+      const secret = region.rooms.find((r) => r.secret);
+      if (!secret) continue;
+      withSecret++;
+      assert.ok(secret.hiddenThemeId && secret.hiddenThemeId !== region.themeId, 'câmara deve usar outro tema');
+      assert.ok(secret.w >= 4 && secret.h >= 4, 'câmara não pode ser menor que 4×4');
+      assert.ok(secret.id.startsWith(`r${region.index}-`), 'id da câmara deve seguir o padrão da região');
+    }
+    assert.ok(
+      world.regions.some((r) => r.rooms.some((x) => x.secret)),
+      `mundo CAMARA-${i} deveria ter ao menos uma câmara secreta`,
+    );
+  }
+  assert.ok(withSecret / regions > 0.9, `esperado >90% das regiões com câmara, obtido ${((100 * withSecret) / regions).toFixed(1)}%`);
+});
+
+test('cada ambiente tem regra de iluminação própria e distinta', () => {
+  const profiles = THEME_IDS.map((id) => {
+    const l = THEMES[id].lighting;
+    assert.ok(l, `${id} precisa de uma regra de iluminação`);
+    assert.ok(l.density > 0 && l.density <= 1, `${id}: densidade inválida`);
+    assert.ok(Array.isArray(l.radius) && l.radius[0] < l.radius[1], `${id}: raio inválido`);
+    assert.ok(l.unstable >= 0 && l.unstable <= 1, `${id}: instabilidade inválida`);
+    assert.ok(l.steady > 0 && l.steady <= 1, `${id}: intensidade inválida`);
+    return JSON.stringify(l);
+  });
+  assert.equal(new Set(profiles).size, THEME_IDS.length, 'dois temas não podem compartilhar a mesma regra de luz');
+
+  // O gerador realmente aplica a regra: luzes instáveis são mais fracas.
+  const world = generateValidWorld('LUZES');
+  for (const region of world.regions) {
+    assert.ok(region.lights.length >= 3, 'região deve ter luzes');
+    const unstable = region.lights.filter((l) => l.flicker);
+    const steady = region.lights.filter((l) => !l.flicker);
+    if (unstable.length && steady.length) {
+      const avg = (arr) => arr.reduce((n, l) => n + l.intensity, 0) / arr.length;
+      assert.ok(avg(unstable) < avg(steady), `luz instável deve ser mais fraca (região ${region.index})`);
+    }
+  }
+});
+
 test('todos os ambientes têm identidade visual e sonora própria', () => {
   for (const id of THEME_IDS) {
     const theme = THEMES[id];

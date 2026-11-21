@@ -1,6 +1,6 @@
 # NULLSCAPE — Testes
 
-Última execução completa: **86 testes automatizados** + **25 verificações do cliente**, 0 falhas.
+Última execução completa: **87 testes automatizados** + **25 verificações do cliente**, 0 falhas.
 **Multiplayer com navegadores reais: ainda não executado neste ambiente** —
 veja a seção 3 e o checklist final.
 
@@ -12,7 +12,7 @@ veja a seção 3 e o checklist final.
 
 | Arquivo | Cobertura | Nº |
 | --- | --- | --- |
-| `worldgen.test.js` | determinismo por seed, conectividade BFS, portas reais, portões, sigilos alcançáveis, RLE, payload, paletas, água, spawn, tempo de geração | 14 |
+| `worldgen.test.js` | determinismo por seed, conectividade BFS, portas reais, portões, sigilos alcançáveis, RLE, payload, paletas, **regras de iluminação por tema**, água, spawn, tempo de geração | 15 |
 | `physics.test.js` | determinismo de física, colisão, velocidade máxima, anti-speedhack, deslize em paredes, convergência predição↔servidor, **mundo hidratado da rede**, **colisão de portões** | 13 |
 | `creatures.test.js` | estados e contra-jogo de cada criatura, telegrafia, dano com cooldown, limite de criaturas, limpeza, tensão de anomalias, raridade | 17 |
 | `puzzles.test.js` | resolução das 6 variantes, alcance, jogador morto, ordem dos disjuntores, janela das válvulas, alavanca solta, sino, cartão | 9 |
@@ -67,6 +67,7 @@ cd frontend && npm run build
   regressão de um bug que impedia qualquer movimento no navegador.
 - **Portão fechado bloqueia de verdade** e libera ao abrir (testado na física,
   não só na regra).
+- **Cada ambiente tem uma regra de luz distinta** (densidade, raio, instabilidade).
 - **Cada criatura respeita o próprio contra-jogo** (ex.: O Lento congela, O
   Garçom não ataca quem anda, O Solitário espera com o grupo junto).
 - **Anomalias raras exigem tensão** e expiram sozinhas.
@@ -136,6 +137,20 @@ Depois do deploy (ver `docs/PUBLICACAO.md`):
 - validar que nenhum erro de CORS aparece no console.
 
 ---
+
+## 3.6 O que **não** é possível validar sem navegador (e já foi coberto por outro caminho)
+
+| Risco | Como foi mitigado |
+| --- | --- |
+| WebGL/Canvas real, draw calls, fill rate | arte 100% procedural verificada por script (132 texturas pintadas); culling de luzes e RenderTexture documentados em `ARQUITETURA.md` |
+| Áudio WebAudio (autoplay, síntese) | todo o áudio degrada para silêncio se `AudioContext` falhar; iniciado somente após gesto do usuário |
+| Layout real (flex/grid, DPI, mobile) | CSS responsivo com breakpoints; HUD testado em jsdom apenas quanto a presença de nós |
+| Phaser bootando a cena | **execução da cena só é testável em navegador** — a sonda headless não roda (Phaser 3.90 exige `window`/WebGL no bundle ESM). É o motivo do roteiro manual acima ser obrigatório |
+| Latência real de rede | simulado com 6 clientes Socket.IO locais; o cold start do Render precisa ser medido no deploy |
+
+> A verificação estática de texturas (auditoria por script) foi feita
+> porque um `add.image()` com chave inexistente **quebra a cena inteira** no
+> Phaser — foi assim que encontramos o bug do sigilo invisível.
 
 ## 4. Como repetir a suíte completa
 

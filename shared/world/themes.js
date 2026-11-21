@@ -25,6 +25,7 @@ export const THEMES = {
     id: 'offices',
     label: 'Escritórios Intermináveis',
     ambience: 'office-hum',
+    lighting: { density: 0.72, radius: [3, 5], unstable: 0.16, steady: 0.9 }, // fluorescente regular
     accent: '#d8cf9a',
     palette: {
       floor: 0x4b4a43,
@@ -54,6 +55,7 @@ export const THEMES = {
     id: 'hotel',
     label: 'Hotel Vazio',
     ambience: 'hotel-drone',
+    lighting: { density: 0.5, radius: [3, 5], unstable: 0.22, steady: 0.72 }, // abajures + corredor
     accent: '#c9a48a',
     palette: {
       floor: 0x46313a,
@@ -83,6 +85,7 @@ export const THEMES = {
     id: 'pool',
     label: 'Piscinas Internas Impossíveis',
     ambience: 'pool-reverb',
+    lighting: { density: 0.62, radius: [4, 6], unstable: 0.3, steady: 0.95 }, // reflexo d'água no teto
     accent: '#8fd3c6',
     palette: {
       floor: 0x5a6f6c,
@@ -113,6 +116,7 @@ export const THEMES = {
     id: 'garage',
     label: 'Estacionamentos Abandonados',
     ambience: 'garage-wind',
+    lighting: { density: 0.4, radius: [4, 6], unstable: 0.5, steady: 0.6 }, // sódio velho
     accent: '#e0b465',
     palette: {
       floor: 0x393a3b,
@@ -142,6 +146,7 @@ export const THEMES = {
     id: 'school',
     label: 'Escolas sem Alunos',
     ambience: 'school-tone',
+    lighting: { density: 0.8, radius: [3, 6], unstable: 0.12, steady: 1.0 }, // tudo aceso
     accent: '#b9c48a',
     palette: {
       floor: 0x6a6a58,
@@ -171,6 +176,7 @@ export const THEMES = {
     id: 'industrial',
     label: 'Salas Industriais',
     ambience: 'industrial-hum',
+    lighting: { density: 0.34, radius: [3, 5], unstable: 0.5, steady: 0.52 }, // lâmpadas de emergência
     accent: '#cf7f59',
     palette: {
       floor: 0x4a4c4d,
@@ -200,6 +206,7 @@ export const THEMES = {
     id: 'residential',
     label: 'Residências Distorcidas',
     ambience: 'residential-tone',
+    lighting: { density: 0.44, radius: [2, 4], unstable: 0.28, steady: 0.66 }, // luz doméstica
     accent: '#c99ab8',
     palette: {
       floor: 0x4a3c31,
@@ -229,6 +236,7 @@ export const THEMES = {
     id: 'threshold',
     label: 'Limiares',
     ambience: 'liminal-void',
+    lighting: { density: 0.2, radius: [2, 4], unstable: 0.35, steady: 0.35 }, // quase escuro
     accent: '#b7b0c9',
     palette: {
       floor: 0x4d4d52,

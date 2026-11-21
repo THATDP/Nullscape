@@ -105,6 +105,18 @@ curl https://nullscape-server.onrender.com/api/status
 2. Em **Source**, escolha **GitHub Actions** (não "Deploy from a branch").
 3. Pronto — o workflow `.github/workflows/deploy-pages.yml` cuida do resto.
 
+> ⚠️ **Muito importante.** Se o Pages estiver em **"Deploy from a branch"**
+> (modo *legacy*), o workflow falha com `Get Pages site failed` / `Not Found`.
+> Troque a fonte para **GitHub Actions**. Por linha de comando (token com
+> permissão de administração do repositório):
+>
+> ```bash
+> gh api -X PUT repos/SEU_USUARIO/Nullscape/pages -f build_type=workflow
+> gh api repos/SEU_USUARIO/Nullscape/pages --jq '.build_type'   # deve imprimir: workflow
+> ```
+>
+> Isso não afeta o Render, que tem deploy próprio.
+
 ### 2.2 Configurar a URL do servidor
 
 1. **Settings** → **Secrets and variables** → **Actions** → aba **Variables**.
@@ -196,9 +208,9 @@ apenas no `npm run dev`, onde o Vite faz proxy).
 - [ ] `backend/package.json` com `"start": "node src/index.js"` e `engines.node >= 20`.
 - [ ] Render: root `backend`, health check `/health`, plano **Free**.
 - [ ] Render: `CORS_ORIGINS` com a origem exata do Pages (sem `/`).
-- [ ] GitHub: Pages → **Source: GitHub Actions**.
 - [ ] GitHub: variável `VITE_SERVER_URL` com a URL do Render (sem `/`).
 - [ ] Workflow verde em **Actions**.
+- [ ] GitHub: Pages → **Source: GitHub Actions** (não "Deploy from a branch").
 - [ ] `/health` responde no Render.
 - [ ] Abrir a URL do Pages em dois navegadores e entrar na mesma sala.
 - [ ] Confirmar que o console não mostra erro de CORS.
@@ -217,7 +229,8 @@ apenas no `npm run dev`, onde o Vite faz proxy).
 | Tela preta no jogo | WebGL indisponível | o Phaser cai para Canvas automaticamente; reporte com o console |
 | Build falha com "shared not found" | `shared/` fora do repo | `shared/` precisa ser versionado e estar no mesmo nível de `frontend/` |
 | 404 ao atualizar a página no Pages | `404.html` ausente | o workflow copia `index.html` → `404.html` |
-| `npm ci` falha no Render | `package-lock.json` ausente | commitar `backend/package-lock.json` |
+| `npm ci` falha no Render | `package-lock.json` ausente ou dessincronizado | rodar `npm install` na pasta e commitar o lockfile |
+| Deploy do Pages falha com `Get Pages site failed` | Pages em modo *legacy* | trocar a fonte para **GitHub Actions** (ver 2.1) |
 
 ---
 

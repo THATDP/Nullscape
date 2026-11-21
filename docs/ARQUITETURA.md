@@ -141,6 +141,15 @@ serializeWorld(world)  --rede-->  hydrateWorld(payload)  --physica--> stepMoveme
 > servidor. Sem ela a predição quebra no primeiro frame — há teste de regressão
 > em `physics.test.js` e no smoke do cliente.
 
+### 3.2.1.1 Câmaras secretas (mundo) — ver também §3.1
+
+`trySecretChamber` roda **antes** de cavar corredores e faz até **9 tentativas
+progressivas** (tamanho 6–8 → 5–7 → 4–6 tiles; margem 3 → 2; distância máxima da
+sala-anfitriã 18 → 20 → 24). Uma única tentativa deixava ~19% das regiões sem
+câmara e 45% dos mundos sem nenhuma. Hoje: **~99% das regiões** têm câmara e
+todo mundo tem pelo menos uma. O corredor tem duas chances (com e sem a lista de
+bloqueios) antes de a câmara ser descartada.
+
 ### 3.2.2 Colisão de portões
 
 Portões de fronteira são validados **na física**, não na UI: `circleBlocked`

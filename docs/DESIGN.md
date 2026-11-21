@@ -86,8 +86,24 @@ Nada é carregado da rede. O primeiro frame já tem tudo.
 
 ## 6. Luz e atmosfera
 
-- cada sala recebe luzes de teto com raio de 3–6 tiles;
-- ~16–50% delas são instáveis (flicker) por tema;
+Cada ambiente tem **sua própria regra de iluminação** (`lighting` em
+`shared/world/themes.js`) — densidade de luminárias, raio, instabilidade e
+intensidade base. Nenhum tema repete outro (há teste garantindo isso):
+
+| Tema | Densidade | Raio (tiles) | Instável | Intensidade base |
+| --- | --- | --- | --- | --- |
+| Escritórios | 0,72 | 3–5 | 16% | 0,90 |
+| Hotel | 0,50 | 3–5 | 22% | 0,72 |
+| Piscina | 0,62 | 4–6 | 30% | 0,95 |
+| Estacionamento | 0,40 | 4–6 | 50% | 0,60 |
+| Escola | 0,80 | 3–6 | 12% | 1,00 |
+| Industrial | 0,34 | 3–5 | 50% | 0,52 |
+| Residencial | 0,44 | 2–4 | 28% | 0,66 |
+| Limiar | 0,20 | 2–4 | 35% | 0,35 |
+
+- luz instável é **mais fraca** (45–80% da base) — o prédio parece mal mantido
+  justamente onde pisca;
+- nenhuma sala pode ficar totalmente escura (uma luz de teto é garantida);
 - **camada de escuridão** global (`darkLayer`) modulada pela configuração;
 - **blend aditivo** nas luzes, com culling: no máximo 26 luzes visíveis por frame;
 - anomalias de apagão derrubam luzes da área;
