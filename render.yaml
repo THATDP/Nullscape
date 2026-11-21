@@ -1,0 +1,32 @@
+# NULLSCAPE — Blueprint do Render (plano gratuito)
+#
+# 1. Faça push deste arquivo no GitHub.
+# 2. No Render: New + -> Blueprint -> selecione o repositório.
+# 3. O Render lê este arquivo e cria o serviço web automaticamente.
+#
+# Atenção ao plano gratuito: o serviço hiberna após ~15 min sem tráfego.
+# A primeira requisição depois disso leva ~30-60s (cold start). O cliente
+# mostra um estado "servidor acordando" e reconecta sozinho.
+
+services:
+  - type: web
+    name: nullscape-server
+    runtime: node
+    plan: free
+    region: oregon
+    rootDir: backend
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: '20'
+      - key: CORS_ORIGINS
+        sync: false # preencha no painel: https://SEU_USUARIO.github.io
+      - key: ALLOW_GITHUB_PAGES
+        value: 'true'
+      - key: LOG_LEVEL
+        value: info

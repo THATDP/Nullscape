@@ -1,0 +1,30 @@
+# dependências
+node_modules/
+.pnp
+.pnp.js
+
+# builds
+frontend/dist/
+frontend/.vite/
+backend/coverage/
+
+# ambientes e segredos
+.env
+.env.*
+!.env.example
+
+# sistema
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*
+
+# editores
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+
+# temporários
+.cache/
+tmp/
